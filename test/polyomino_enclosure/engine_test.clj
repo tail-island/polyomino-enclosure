@@ -129,5 +129,4 @@
                                                                                ["translate(-2,-4);"]))))))))
 
 (deftest test-score
-  (is (= 26
-         (score (result (execute-programs (create-polyominos polyomino-definition-strings) (create-programs program-definition-strings)))))))
+  (is (= 26 (score (result (execute-programs (create-polyominos polyomino-definition-strings) (create-programs program-definition-strings)))))))

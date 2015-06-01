@@ -158,25 +158,16 @@
   [execute-program-result]
   (map last execute-program-result))
 
-(defn- overlap?
-  [board]
-  (not (every? #(<= % 1) (vals board))))
-
-(defn- not-enclosed?
-  [board]
-  (try
-    (and (area-size board :search-8-way? true) nil)
-    (catch #+clj clojure.lang.ExceptionInfo #+cljs cljs.core.ExceptionInfo _ true)))
-
 (defn validate-result
   [result]
   (let [board (apply board result)]
     (letfn [(validate-overlaps []
-              (if (overlap? board)
+              (if-not (every? #(<= % 1) (vals board))
                 "ポリオミノが重なっています。"))
             (validate-enclosed []
-              (if (not-enclosed? board)
-                "ポリオミノで囲み込めていません。"))]
+              (try
+                (and (area-size board :search-8-way? true) nil)
+                (catch #+clj clojure.lang.ExceptionInfo #+cljs cljs.core.ExceptionInfo _ "ポリオミノで囲み込めていません。")))]
       (or (validate-overlaps)
           (validate-enclosed)))))
 
