@@ -13,8 +13,7 @@
               (->> (string/split definition-string #",")
                    (map string/trim)
                    (map #(#+clj Integer/parseInt #+cljs js/parseInt %))
-                   (partition 2))
-              []))]
+                   (partition 2))))]
     (->> definition-strings
          (map #(create-polyomino (string/trim %))))))
 
@@ -45,14 +44,14 @@
 (defn create-programs
   [definition-strings]
   (letfn [(create-operation-fn [definition-string]
-            #+clj  (ns-resolve 'polyomino-enclosure.engine (symbol (string/replace definition-string \_ \-)))
-            #+cljs (aget polyomino-enclosure.engine definition-string))
+            (if-not (empty? definition-string)
+              #+clj  (ns-resolve 'polyomino-enclosure.engine (symbol (string/replace definition-string \_ \-)))
+              #+cljs (aget polyomino-enclosure.engine definition-string)))
           (create-operation-args [definition-string]
             (if-not (empty? definition-string)
               (->> (string/split definition-string #",")
                    (map string/trim)
-                   (map #(#+clj Integer/parseInt #+cljs js/parseInt %)))
-              []))
+                   (map #(#+clj Integer/parseInt #+cljs js/parseInt %)))))
           (create-functions [definition-string]
             (if-not (empty? definition-string)
               (->> (next (re-find #"([a-z_]+).*\((.*)\)" definition-string))
@@ -60,14 +59,12 @@
                       #(apply operate-polyomino
                          %
                          (create-operation-fn   (string/trim operation-fn-string))
-                         (create-operation-args (string/trim operation-args-string))))))
-              []))
+                         (create-operation-args (string/trim operation-args-string))))))))
           (create-program [definition-string]
             (if-not (empty? definition-string)
               (->> (string/split definition-string #";")
                    (map string/trim)
-                   (map create-functions))
-              []))]
+                   (map create-functions))))]
     (->> definition-strings
          (map #(create-program (string/trim %))))))
 
@@ -154,8 +151,7 @@
                                         (execute-functions (function polyomino) more)))))
           (execute-program [polyomino program]
             (if-not (empty? program)
-              (execute-functions polyomino program)
-              []))]
+              (execute-functions polyomino program)))]
     (map execute-program polyominos programs)))
 
 (defn result
