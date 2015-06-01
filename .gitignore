@@ -4,4 +4,4 @@
 /.nrepl-port
 
 /resources/public/cljs
-/resources/public/lib
+/grunt/node_modules

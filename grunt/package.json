@@ -1,0 +1,9 @@
+{
+  "name": "xxx",
+  "version": "0.1.0",
+  "main": "Gruntfile.js",
+  "devDependencies": {
+    "grunt": "*",
+    "grunt-bower-task": "*"
+  }
+}

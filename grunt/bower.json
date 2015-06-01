@@ -1,0 +1,32 @@
+{
+  "name": "xxx",
+  "version": "0.0.1",
+  "main": "xxx.js",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components"
+  ],
+  "dependencies": {
+    "jquery": "*",
+    "bootstrap": "*",
+    "EaselJS": "*",
+    "TweenJS": "*"
+  },
+  "exportsOverride": {
+    "jquery": {
+      ".": "dist/*.min.*"
+    },
+    "bootstrap": {
+      ".": "dist/js/*.min.*",
+      "css": "dist/css/bootstrap.min.css",
+      "fonts": "dist/fonts/*"
+    },
+    "EaselJS": {
+      ".": "lib/*.min.js"
+    },
+    "TweenJS": {
+      ".": "lib/*.min.js"
+    }
+  }
+}

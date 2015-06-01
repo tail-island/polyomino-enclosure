@@ -42,6 +42,39 @@
   [polyomino operation-fn & operation-args]
   (map #(apply operation-fn % operation-args) polyomino))
 
+(defn create-programs
+  [definition-strings]
+  (letfn [(create-operation-fn [definition-string]
+            (case definition-string
+              "rotate_clockwise"         rotate-clockwise
+              "rotate_counter_clockwise" rotate-counter-clockwise
+              "flip_horizontal"          flip-horizontal
+              "flip_vertical"            flip-vertical
+              "translate"                translate))
+          (create-operation-args [definition-string]
+            (if-not (empty? definition-string)
+              (->> (string/split definition-string #",")
+                   (map string/trim)
+                   (map #(#+clj Integer/parseInt #+cljs js/parseInt %)))
+              []))
+          (create-functions [definition-string]
+            (if-not (empty? definition-string)
+              (->> (next (re-find #"([a-z_]+).*\((.*)\)" definition-string))
+                   ((fn [[operation-fn-string operation-args-string]]
+                      #(apply operate-polyomino
+                         %
+                         (create-operation-fn   (string/trim operation-fn-string))
+                         (create-operation-args (string/trim operation-args-string))))))
+              []))
+          (create-program [definition-string]
+            (if-not (empty? definition-string)
+              (->> (string/split definition-string #";")
+                   (map string/trim)
+                   (map create-functions))
+              []))]
+    (->> definition-strings
+         (map #(create-program (string/trim %))))))
+
 (defn- xs-and-ys
   [points]
   ((juxt (partial map first)
@@ -61,7 +94,7 @@
             board
             points)))
 
-(defn- area
+(defn- area-size
   [board & {:keys [search-8-way?]}]
   (letfn [(next-area-point? [point]
             (if-let [value (get board point)]
@@ -84,83 +117,48 @@
                                                                (next-area-points point)))))))]
     (count (area-points (conj #+clj clojure.lang.PersistentQueue/EMPTY #+cljs (.EMPTY cljs.core.PersistentQueue) [0 0]) #{(hash [0 0])}))))
 
-(defn validate-polyominos
-  [polyominos]
+(defn validate-game
+  [polyominos programs]
   (letfn [(validate-form []
             (let [[omino-count & omino-counts] (map count polyominos)]
               (if-not (and (every? #(= % omino-count) omino-counts)
-                           (every? #(= (area (board %)) omino-count) polyominos))
+                           (every? #(= (area-size (board %)) omino-count) polyominos))
                 "不正なポリオミノがあります。")))
           (validate-duplication []
             (letfn [(variations [polyomino]
                       (letfn [(rotate-variations [polyomino]
                                 (take 4 (iterate #(operate-polyomino % rotate-clockwise) polyomino)))
                               (normalize-polyomino [polyomino]
-                                (let [[min-x min-y] (map (partial apply min) (xs-and-ys polyomino))]
-                                  (->> polyomino
-                                       (map (fn [[x y]] [(- x min-x) (- y min-y)]))
-                                       (sort))))]
+                                (->> (apply operate-polyomino polyomino translate (map #(- 0 (apply min %)) (xs-and-ys polyomino)))
+                                     (sort)))]
                         (->> (concat (rotate-variations polyomino)
                                      (rotate-variations (operate-polyomino polyomino flip-horizontal))
                                      (rotate-variations (operate-polyomino polyomino flip-vertical)))
                              (map normalize-polyomino)
                              (distinct))))
-                    (validate-polyominos [errors [[polyomino-variations line-number] & more]]
+                    (duplicated-polyominos [errors [[polyomino-variations polyomino-number] & more]]
                       (if polyomino-variations
-                        (letfn [(validate-polyomino [errors [[other-polyomino-variations other-line-number] & more]]
+                        (letfn [(duplicated-polyominos' [errors [[other-polyomino-variations other-polyomino-number] & more]]
                                   (if other-polyomino-variations
                                     (recur (if (not-empty (filter (partial apply =) (cartesian-product polyomino-variations other-polyomino-variations)))
-                                             (conj errors (str line-number "行目と" other-line-number "行目のポリオミノは重複しています。"))
+                                             (conj errors (str polyomino-number "行目と" other-polyomino-number "行目のポリオミノは重複しています。"))
                                              errors)
                                            more)
                                     errors))]
-                          (recur (validate-polyomino errors more)
-                                 more))
+                          (recur (duplicated-polyominos' errors more) more))
                         errors))]
-              (not-empty (string/join "\n" (validate-polyominos [] (map #(vector (variations %1) %2) polyominos (iterate inc 1)))))))]
+              (not-empty (string/join "\n" (duplicated-polyominos [] (map #(vector (variations %1) %2) polyominos (iterate inc 1)))))))]
     (or (validate-form)
         (validate-duplication))))
-
-(defn create-programs
-  [definition-strings]
-  (letfn [(create-args [definition-string]
-            (if-not (empty? definition-string)
-              (->> (string/split definition-string #",")
-                   (map string/trim)
-                   (map #(#+clj Integer/parseInt #+cljs js/parseInt %)))
-              []))
-          (create-command [definition-string]
-            (if-not (empty? definition-string)
-              (->> (next (re-find #"([a-z_]+).*\((.*)\)" definition-string))
-                   ((fn [[command-string args-string]] (cons (keyword (string/replace (string/trim command-string) \_ \-))
-                                                             (create-args (string/trim args-string))))))
-              []))
-          (create-program [definition-string]
-            (if-not (empty? definition-string)
-              (->> (string/split definition-string #";")
-                   (map string/trim)
-                   (map create-command))
-              []))]
-    (->> definition-strings
-         (map #(create-program (string/trim %))))))
   
 (defn execute-programs
   [polyominos programs]
-  (letfn [(execute-commands [polyomino [[command & args] & more]]
-            (cons polyomino (lazy-seq (if command
-                                        (execute-commands (apply operate-polyomino
-                                                            polyomino
-                                                            (case command
-                                                              :rotate-clockwise         rotate-clockwise
-                                                              :rotate-counter-clockwise rotate-counter-clockwise
-                                                              :flip-horizontal          flip-horizontal
-                                                              :flip-vertical            flip-vertical
-                                                              :translate                translate)
-                                                            args)
-                                                          more)))))
+  (letfn [(execute-functions [polyomino [function & more]]
+            (cons polyomino (lazy-seq (if function
+                                        (execute-functions (function polyomino) more)))))
           (execute-program [polyomino program]
             (if-not (empty? program)
-              (execute-commands polyomino program)
+              (execute-functions polyomino program)
               []))]
     (map execute-program polyominos programs)))
 
@@ -175,7 +173,7 @@
 (defn- not-enclosed?
   [board]
   (try
-    (and (area board :search-8-way? true) nil)
+    (and (area-size board :search-8-way? true) nil)
     (catch #+clj clojure.lang.ExceptionInfo #+cljs cljs.core.ExceptionInfo _ true)))
 
 (defn validate-result
@@ -192,4 +190,4 @@
 
 (defn score
   [result]
-  (area (apply board result)))
+  (area-size (apply board result)))
