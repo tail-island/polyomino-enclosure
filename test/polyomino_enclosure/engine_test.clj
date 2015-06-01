@@ -80,7 +80,28 @@
          (create-programs program-definition-strings))))
 
 (deftest test-execute-programs
-  (pprint (execute-programs (create-polyominos polyomino-definition-strings) (create-programs program-definition-strings))))
+  (is (= [[[[0 0] [0 1] [0 2] [0 3] [1 3]]
+           [[0 0] [1 0] [2 0] [3 0] [3 -1]]
+           [[0 1] [1 1] [2 1] [3 1] [3 0]]]
+          [[[0 0] [0 1] [-1 1] [-1 2] [-1 3]]
+           [[0 0] [0 -1] [-1 -1] [-1 -2] [-1 -3]]
+           [[-4 3] [-4 2] [-5 2] [-5 1] [-5 0]]]
+          []
+          [[[0 0] [0 1] [0 2] [1 2] [2 2]]
+           [[0 0] [0 -1] [0 -2] [1 -2] [2 -2]]
+           [[-5 -1] [-5 -2] [-5 -3] [-4 -3] [-3 -3]]]
+          [[[0 0] [0 1] [1 1] [1 2] [2 2]]
+           [[0 0] [0 1] [-1 1] [-1 2] [-2 2]]
+           [[-1 1] [-1 2] [-2 2] [-2 3] [-3 3]]]
+          [[[0 0] [1 0] [1 1] [1 2] [2 2]]
+           [[1 -3] [2 -3] [2 -2] [2 -1] [3 -1]]
+           [[3 1] [3 2] [2 2] [1 2] [1 3]]
+           [[-1 3] [-2 3] [-2 2] [-2 1] [-3 1]]
+           [[-3 -1] [-3 -2] [-2 -2] [-1 -2] [-1 -3]]
+           [[1 -3] [2 -3] [2 -2] [2 -1] [3 -1]]]
+          [[[0 0] [1 0] [2 0] [3 0] [4 0]]
+           [[-3 -4] [-2 -4] [-1 -4] [0 -4] [1 -4]]]]
+         (execute-programs (create-polyominos polyomino-definition-strings) (create-programs program-definition-strings)))))
 
 (deftest test-validate-result
   (is (= nil

@@ -1,12 +1,10 @@
 (ns polyomino-enclosure.engine
   (:require [clojure.string :as string]))
 
-#+clj
-(defmacro ^:private cartesian-product  ; ClojureScriptではmath.combinatoricsが使えなかったので、自前で用意しました。
-  [& seqs]
-  (let [syms# (take (count seqs) (repeatedly gensym))]
-    `(for ~(vec (mapcat vector syms# seqs))
-       [~@syms#])))
+(defn- cartesian-product  ; ClojureScriptではmath.combinatoricsが使えなかったので、自前で用意しました。
+  [xs ys]
+  (for [x xs, y ys]
+    [x y]))
 
 (defn create-polyominos
   [definition-strings]
@@ -162,7 +160,8 @@
                                                           more)))))
           (execute-program [polyomino program]
             (if-not (empty? program)
-              (execute-commands polyomino program)))]
+              (execute-commands polyomino program)
+              []))]
     (map execute-program polyominos programs)))
 
 (defn result
