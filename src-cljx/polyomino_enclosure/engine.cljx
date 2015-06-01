@@ -45,12 +45,8 @@
 (defn create-programs
   [definition-strings]
   (letfn [(create-operation-fn [definition-string]
-            (case definition-string
-              "rotate_clockwise"         rotate-clockwise
-              "rotate_counter_clockwise" rotate-counter-clockwise
-              "flip_horizontal"          flip-horizontal
-              "flip_vertical"            flip-vertical
-              "translate"                translate))
+            #+clj  (ns-resolve 'polyomino-enclosure.engine (symbol (string/replace definition-string \_ \-)))
+            #+cljs (aget polyomino-enclosure.engine definition-string))
           (create-operation-args [definition-string]
             (if-not (empty? definition-string)
               (->> (string/split definition-string #",")
