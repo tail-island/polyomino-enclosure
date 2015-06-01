@@ -161,14 +161,18 @@
 (defn validate-result
   [result]
   (let [board (apply board result)]
-    (letfn [(validate-overlaps []
+    (letfn [(validate-origin []
+              (if-not (= (get board [0 0]) 0)
+                "原点がポリオミノで覆われています。"))
+            (validate-overlaps []
               (if-not (every? #(<= % 1) (vals board))
                 "ポリオミノが重なっています。"))
             (validate-enclosed []
               (try
                 (and (area-size board :search-8-way? true) nil)
                 (catch #+clj clojure.lang.ExceptionInfo #+cljs cljs.core.ExceptionInfo _ "ポリオミノで囲み込めていません。")))]
-      (or (validate-overlaps)
+      (or (validate-origin)
+          (validate-overlaps)
           (validate-enclosed)))))
 
 (defn score

@@ -119,6 +119,10 @@
   (is (= nil
          (validate-result (result (execute-programs (create-polyominos polyomino-definition-strings)
                                                     (create-programs   program-definition-strings))))))
+  (is (= "原点がポリオミノで覆われています。"
+         (validate-result (result (execute-programs (create-polyominos polyomino-definition-strings)
+                                                    (create-programs   (concat (butlast program-definition-strings)
+                                                                               ["translate(-2,0);"])))))))
   (is (= "ポリオミノが重なっています。"
          (validate-result (result (execute-programs (create-polyominos polyomino-definition-strings)
                                                     (create-programs   (concat (butlast program-definition-strings)
