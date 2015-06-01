@@ -20,4 +20,4 @@
   :cljsbuild    {:builds [{:source-paths ["src-cljs" "target/classes"]
                            :compiler     {:main       polyomino-enclosure.core
                                           :output-dir "resources/public/cljs"
-                                          :output-to  "resources/public/cljas/polyomino-enclosure.js"}}]})
+                                          :output-to  "resources/public/cljs/polyomino-enclosure.js"}}]})
