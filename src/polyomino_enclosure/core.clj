@@ -1,7 +1,6 @@
 (ns polyomino-enclosure.core
   (:use     (polyomino-enclosure engine))
-  (:require (clojure             [string :as string]
-                                 [pprint :as pprint])
+  (:require (clojure             [string :as string])
             (clojure.java        [shell  :as shell]))
   (:gen-class))
 
@@ -11,10 +10,10 @@
     (apply println more)))
 
 (defn -main
-  [question-file-name solution-program-name]
-  (let [question        (slurp question-file-name)
+  [question-file solution-program]
+  (let [question        (slurp question-file)
         start-nano-time (System/nanoTime)
-        answer          (:out (shell/sh solution-program-name :in question))
+        answer          (:out (shell/sh solution-program :in question))
         end-nano-time   (System/nanoTime)
         polyominos      (create-polyominos (string/split-lines question))
         programs        (create-programs   (string/split-lines answer))]
