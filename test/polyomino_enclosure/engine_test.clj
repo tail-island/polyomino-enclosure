@@ -54,7 +54,7 @@
                                                                                         (#'polyomino-enclosure.engine/operate-polyomino #'polyomino-enclosure.engine/translate 1 1)))))))
 
 ;; (deftest test-create-programs
-;;   (is (= [[[:rotate-counter-clockwise]  ; キーワードから関数に変えたら、テストしづらい……。どうしよう？
+;;   (is (= [[[:rotate-counter-clockwise]  ; キーワードから関数に変えたら、テストしづらくなっちゃった……。どうしよう？
 ;;            [:translate 0 1]]
 ;;           [[:flip-vertical]
 ;;            [:translate -4 3]]

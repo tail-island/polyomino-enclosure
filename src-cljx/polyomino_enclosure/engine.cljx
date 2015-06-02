@@ -68,20 +68,21 @@
     (->> definition-strings
          (map #(create-program (string/trim %))))))
 
-(defn- xs-and-ys
+(defn left-top-right-and-bottom
   [points]
-  ((juxt (partial map first)
-         (partial map second))
-   points))
+  (->> points
+       ((juxt (partial map first)
+              (partial map second)))
+       ((juxt (partial map (partial apply min))
+              (partial map (partial apply max))))
+       (apply concat)))
 
 (defn- board
   [& polyominos]
   (let [points (apply concat polyominos)
-        board  (let [[[l t] [r b]] (->> (xs-and-ys points)
-                                        ((juxt (partial map #(dec (apply min %)))  ; 番人を使いたいので、一回り大きくしておきます。
-                                               (partial map #(inc (apply max %))))))]
-                 (zipmap (cartesian-product (take-while #(<= % r) (iterate inc l))
-                                            (take-while #(<= % b) (iterate inc t)))
+        board  (let [[l t r b] (left-top-right-and-bottom points)]
+                 (zipmap (cartesian-product (take-while #(<= % (inc r)) (iterate inc (dec l)))  ; 番人を使いたいので、一回り大きくしておきます。
+                                            (take-while #(<= % (inc b)) (iterate inc (dec t))))
                          (repeat 0)))]
     (reduce #(update-in %1 [%2] inc)
             board
@@ -108,7 +109,7 @@
                                                                      result)))
                                                                [(pop points) point-hashes]
                                                                (next-area-points point)))))))]
-    (count (area-points (conj #+clj clojure.lang.PersistentQueue/EMPTY #+cljs (.EMPTY cljs.core.PersistentQueue) [0 0]) #{(hash [0 0])}))))
+    (count (area-points (conj #+clj clojure.lang.PersistentQueue/EMPTY #+cljs (.-EMPTY cljs.core.PersistentQueue) [0 0]) #{(hash [0 0])}))))
 
 (defn validate-game
   [polyominos programs]
@@ -122,7 +123,7 @@
                       (letfn [(rotate-variations [polyomino]
                                 (take 4 (iterate #(operate-polyomino % rotate-clockwise) polyomino)))
                               (normalize-polyomino [polyomino]
-                                (->> (apply operate-polyomino polyomino translate (map #(- 0 (apply min %)) (xs-and-ys polyomino)))
+                                (->> (apply operate-polyomino polyomino translate (map #(- 0 %) (take 2 (left-top-right-and-bottom polyomino))))
                                      (sort)))]
                         (->> (concat (rotate-variations polyomino)
                                      (rotate-variations (operate-polyomino polyomino flip-horizontal))
@@ -162,7 +163,7 @@
   [result]
   (let [board (apply board result)]
     (letfn [(validate-origin []
-              (if-not (= (get board [0 0]) 0)
+              (if (> (get board [0 0]) 0)
                 "原点がポリオミノで覆われています。"))
             (validate-overlaps []
               (if-not (every? #(<= % 1) (vals board))

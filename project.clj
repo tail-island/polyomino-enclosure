@@ -18,6 +18,7 @@
                            :output-path  "target/classes"
                            :rules        :cljs}]}
   :cljsbuild    {:builds [{:source-paths ["src-cljs" "target/classes"]
-                           :compiler     {:main       polyomino-enclosure.core
+                           :compiler     {:asset-path "cljs"
+                                          :main       polyomino-enclosure.gui
                                           :output-dir "resources/public/cljs"
                                           :output-to  "resources/public/cljs/polyomino-enclosure.js"}}]})
