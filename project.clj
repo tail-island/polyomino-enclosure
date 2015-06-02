@@ -9,6 +9,8 @@
                  [org.omcljs/om             "0.8.8"]
                  [sablono                   "0.3.4"]]
   :source-paths ["src" "target/classes"]
+  :main         polyomino-enclosure.core
+  :profiles     {:uberjar {:aot :all}}
   :plugins      [[com.keminglabs/cljx "0.6.0"]
                  [lein-cljsbuild      "1.0.6"]]
   :cljx         {:builds [{:source-paths ["src-cljx"]
@@ -21,4 +23,6 @@
                            :compiler     {:asset-path "cljs"
                                           :main       polyomino-enclosure.gui
                                           :output-dir "resources/public/cljs"
-                                          :output-to  "resources/public/cljs/polyomino-enclosure.js"}}]})
+                                          :output-to  "resources/public/cljs/polyomino-enclosure.js"}}]}
+  :aliases      {"uberjar" ["do" "clean," "cljx" "once," "uberjar"]}
+  :auto-clean   false)
