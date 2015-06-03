@@ -70,7 +70,7 @@
 
 (defn left-top-right-and-bottom
   [points]
-  (->> points
+  (->> (or (not-empty points) [[0 0]])
        ((juxt (partial map first)
               (partial map second)))
        ((juxt (partial map (partial apply min))
@@ -113,7 +113,10 @@
 
 (defn validate-game
   [polyominos programs]
-  (letfn [(validate-form []
+  (letfn [(validate-contains-origin []
+            (if-not (every? #(some (fn [[x y]] (and (= x 0) (= y 0))) %) polyominos)
+              "原点を含まないポリオミノがあります。"))
+          (validate-form []
             (let [[omino-count & omino-counts] (map count polyominos)]
               (if-not (and (every? #(= % omino-count) omino-counts)
                            (every? #(= (area-size (board %)) omino-count) polyominos))
@@ -142,7 +145,8 @@
                           (recur (duplicated-polyominos' errors more) more))
                         errors))]
               (not-empty (string/join "\n" (duplicated-polyominos [] (map #(vector (variations %1) %2) polyominos (iterate inc 1)))))))]
-    (or (validate-form)
+    (or (validate-contains-origin)
+        (validate-form)
         (validate-duplication))))
   
 (defn execute-programs

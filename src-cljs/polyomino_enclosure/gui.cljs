@@ -47,6 +47,10 @@
   [& [count]]
   [:span {:dangerouslySetInnerHTML #js {:__html (apply str (repeat (or count 1) "&nbsp;"))}}])
 
+(defn- no-error?
+  []
+  (empty? (get-in @model [:feedback :message])))
+
 (defn definition-view
   [{:keys [question answer] :as cursor} owner]
   (letfn [(clear [& keys]
@@ -64,7 +68,7 @@
                (html/label :programs "解答")
                (html/text-area {:class "form-control", :rows "10", :on-change (fn [event] (om/update! cursor :answer   (-> event .-target .-value)))} :answer   answer)]]]
             [:div
-             [:button.btn.btn-default {:on-click (fn [event] (clear :question :answer))} "クリア"]
+             [:button.btn.btn-default {:on-click (fn [event] (clear :answer :question))} "クリア"]
              (nbsp)
              [:button.btn.btn-default {:on-click (fn [event] (clear :answer))} "解答のみクリア"]
              (nbsp)
@@ -73,7 +77,7 @@
 (defn feedback-view
   [{:keys [message] :as cursor} owner]
   (letfn [(finish []
-            (when-not (get-in @model [:feedback :message])
+            (when (no-error?)
               (om/update! cursor [:message] (str "正常終了しました。スコアは" (engine/score (get-in @model [:game :result])) "です。"))))]
     (reify
       om/IWillMount
@@ -93,20 +97,21 @@
   [{:keys [polyominos programs result] :as cursor} owner]
   (let [stage (atom nil)]
     (letfn [(reset-stage []
-              (reset! stage (js/createjs.Stage. "canvas"))
+              (reset! stage (js/createjs.Stage. (dom/getElement "canvas")))
               (doto js/createjs.Ticker
                 (.setFPS 30)
-                (.on "tick" (fn [event] (when (.hasActiveTweens js/createjs.Tween)
-                                          (.update @stage))))))
+                (.on     "tick" (fn [event]
+                                  (when (.hasActiveTweens js/createjs.Tween)
+                                    (.update @stage))))))
             (resize-canvas []
-              (-> (js/$ (-> @stage .-canvas))
-                  (.attr "width"  (- (.-innerWidth  js/window)                        30))
-                  (.attr "height" (- (.-innerHeight js/window) (.height (js/$ "nav")) 30)))
+              (doto (.-canvas @stage)
+                (-> .-width  (set! (- (.-innerWidth  js/window)                                         30)))
+                (-> .-height (set! (- (.-innerHeight js/window) (.-clientHeight (dom/getElement "nav")) 30))))
               (doto @stage
-                (-> .-x (set! (/ (js/parseInt (-> @stage .-canvas .-width))  2)))
-                (-> .-y (set! (/ (js/parseInt (-> @stage .-canvas .-height)) 2)))))
+                (-> .-x (set! (/ (-> @stage .-canvas .-width)  2)))
+                (-> .-y (set! (/ (-> @stage .-canvas .-height) 2)))))
             (scale-stage-for [points]
-              (let [[l1 t1 r1 b1] (let [[left top] (map #(- 0 (/ (js/parseInt %) 2)) ((juxt #(.-width %) #(.-height %)) (.-canvas @stage)))]
+              (let [[l1 t1 r1 b1] (let [[left top] (map #(- 0 (/ % 2)) ((juxt #(.-width %) #(.-height %)) (.-canvas @stage)))]
                                     [left top (- 0 left) (- 0 top)])
                     [l2 t2 r2 b2] (engine/left-top-right-and-bottom points)
                     scale         (apply min (filter identity [(and (< l2 0) (/ l1 (dec l2)))
@@ -120,9 +125,9 @@
               (doto (js/createjs.Shape.)
                 (-> .-graphics
                     (.setStrokeStyle 0.1 "round")
-                    (.beginStroke line-color)
-                    (.beginFill fill-color)
-                    (.rect -0.45 -0.45 0.9 0.9))
+                    (.beginStroke    line-color)
+                    (.beginFill      fill-color)
+                    (.rect           -0.45 -0.45 0.9 0.9))
                 (-> .-x (set! x))
                 (-> .-y (set! y))))
             (draw-deck [polyominos]
@@ -137,11 +142,11 @@
                             (doto @stage
                               (.addChild polyomino-shape))
                             (-> js/createjs.Tween
-                                (.get polyomino-shape)
-                                (.to  #js {:x      (- x (first (engine/left-top-right-and-bottom polyomino)))
-                                           :scaleX 1
-                                           :scaleY 1}
-                                      200)
+                                (.get  polyomino-shape)
+                                (.to   #js {:x      (- x (first (engine/left-top-right-and-bottom polyomino)))
+                                            :scaleX 1
+                                            :scaleY 1}
+                                       200)
                                 (.call #(draw-deck-polyominos more-polyominos more-xs more-line-colors more-fill-colors))))
                           (do (.update @stage)
                               (js/setTimeout #(put! event-publisher {:type :execute}) 500))))]
@@ -151,11 +156,10 @@
                   (.removeAllChildren)
                   (.update))
                 (let [ws (interpose 1 (map #(let [[l _ r _] (engine/left-top-right-and-bottom %)]
-                                              (inc (- r l)))
+                                              (+ (- r l) 1))
                                            polyominos))
                       w  (reduce + ws)
-                      xs (reduce (fn [xs [w1 w2]]
-                                   (conj xs (+ (last xs) w1 w2)))
+                      xs (reduce #(conj %1 (reduce + (last %1) %2))
                                  [(- 0.5 (/ w 2))]
                                  (partition 2 ws))]
                   (scale-stage-for [[(- 0 (/ w 2)) 0] [(/ w 2) 0]])
@@ -186,11 +190,11 @@
                   (.addChild (doto (js/createjs.Shape.)
                                (-> .-graphics
                                    (.setStrokeStyle 0.1 "round")
-                                   (.beginStroke "#808080")
-                                   (.moveTo -0.25 0)
-                                   (.lineTo  0.25 0)
-                                   (.moveTo 0 -0.25)
-                                   (.lineTo 0  0.25))))
+                                   (.beginStroke    "#808080")
+                                   (.moveTo         -0.25  0)
+                                   (.lineTo          0.25  0)
+                                   (.moveTo          0    -0.25)
+                                   (.lineTo          0     0.25))))
                   (.update))
                 (scale-stage-for (mapcat (partial apply concat) execute-program-result))
                 (draw-polyomino-steps execute-program-result line-colors fill-colors)))]
@@ -225,15 +229,15 @@
                   error      (engine/validate-game polyominos programs)]
               (om/update! cursor [:game     :polyominos] polyominos)
               (om/update! cursor [:game     :programs]   programs)
-              (om/update! cursor [:feedback :message]    error)
+              (om/update! cursor [:feedback :message]    (or error ""))
               (put! event-publisher {:type :draw-deck, :polyominos polyominos})))
           (execute []
-            (when-not (get-in @model [:feedback :message])
+            (when (no-error?)
               (let [execute-program-result (engine/execute-programs (get-in @model [:game :polyominos]) (get-in @model [:game :programs]))
                     result                 (engine/result execute-program-result)
                     error                  (engine/validate-result result)]
                 (om/update! cursor [:game     :result]  result)
-                (om/update! cursor [:feedback :message] error)
+                (om/update! cursor [:feedback :message] (or error ""))
                 (put! event-publisher {:type :draw-execution, :execute-program-result execute-program-result}))))]
     (reify
       om/IWillMount
@@ -251,12 +255,16 @@
       om/IRender
       (render [_]
         (html [:div.container-fluid
-               [:nav
+               [:nav#nav
                 (om/build definition-view definition)
                 [:hr]
                 (om/build feedback-view feedback)
                 [:hr]]
-               [:article
+               [:article#article
                 (om/build game-view game)]])))))
 
 (om/root view model {:target (dom/getElement "app")})
+
+;; TODO: イベント・ループのところをマクロ化する。
+;; TODO: scale-stage-forをリファクタリングする。今のコードは格好悪い。
+
