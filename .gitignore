@@ -3,6 +3,6 @@
 /.lein-*
 /.nrepl-port
 
-.DS_Store
 /resources/public/cljs
 /grunt/node_modules
+.DS_Store
