@@ -62,11 +62,11 @@
              [:div.col-md-6
               [:div.form-group
                (html/label :question "問題")
-               (html/text-area {:class "form-control", :rows "10", :on-change (fn [event] (om/update! cursor :question (-> event .-target .-value)))} :question question)]]
+               (html/text-area {:class "form-control", :rows "5", :on-change (fn [event] (om/update! cursor :question (-> event .-target .-value)))} :question question)]]
              [:div.col-md-6
               [:div.form-group
                (html/label :programs "解答")
-               (html/text-area {:class "form-control", :rows "10", :on-change (fn [event] (om/update! cursor :answer   (-> event .-target .-value)))} :answer   answer)]]]
+               (html/text-area {:class "form-control", :rows "5", :on-change (fn [event] (om/update! cursor :answer   (-> event .-target .-value)))} :answer   answer)]]]
             [:div
              [:button.btn.btn-default {:on-click (fn [event] (clear :answer :question))} "クリア"]
              (nbsp)
