@@ -1,6 +1,6 @@
 # polyomino-enclosure
 
-A test environment for eclosing by polyomino puzzle.
+A test environment for "eclosing by polyominos" puzzle.
 
 ## Usage
 
