@@ -151,9 +151,11 @@
   
 (defn execute-programs
   [polyominos programs]
-  (letfn [(execute-functions [polyomino [function & more]]
-            (cons polyomino (lazy-seq (if function
-                                        (execute-functions (function polyomino) more)))))
+  (letfn [(execute-functions [polyomino [function & more :as functions]]
+            (cons polyomino (lazy-seq (if functions
+                                        (execute-functions (cond->> polyomino
+                                                             function (function))
+                                                           more)))))
           (execute-program [polyomino program]
             (if-not (empty? program)
               (execute-functions polyomino program)))]
@@ -162,6 +164,8 @@
 (defn result
   [execute-program-result]
   (map last execute-program-result))
+
+(declare score)
 
 (defn validate-result
   [result]
@@ -174,7 +178,7 @@
                 "ポリオミノが重なっています。"))
             (validate-enclosed []
               (try
-                (and (area-size board :search-8-way? true) nil)
+                (and (score result) nil)
                 (catch #+clj clojure.lang.ExceptionInfo #+cljs cljs.core.ExceptionInfo _ "ポリオミノで囲み込めていません。")))]
       (or (validate-origin)
           (validate-overlaps)
@@ -182,4 +186,4 @@
 
 (defn score
   [result]
-  (area-size (apply board result)))
+  (area-size (apply board result) :search-8-way? true))
