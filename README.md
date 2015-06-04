@@ -29,7 +29,7 @@ $ lein uberjar
 ### Execute on console.
 
 ```shell
-$ java -jar /target/polyomino-enclosure-0.1.0-SNAPSHOT-standalone.jar question-file answer-file
+$ java -jar target/polyomino-enclosure-0.1.0-SNAPSHOT-standalone.jar question-file answer-file
 ```
 
 Check your question and answer files' correctness.
