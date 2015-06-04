@@ -18,7 +18,7 @@ $ lein cljsbuild once
 
 ### Open `resources/public/index.html`
 
-Check how this puzzle.
+Check rules of this puzzle.
 
 ### Generate jar
 
