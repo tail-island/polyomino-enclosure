@@ -8,16 +8,12 @@
     "bower_components"
   ],
   "dependencies": {
-    "es5-shim": "*",
     "jquery": "*",
     "bootstrap": "*",
     "EaselJS": "*",
     "TweenJS": "*"
   },
   "exportsOverride": {
-    "es5-shim": {
-      ".": "*min.js"
-    },
     "jquery": {
       ".": "dist/*.min.*"
     },
