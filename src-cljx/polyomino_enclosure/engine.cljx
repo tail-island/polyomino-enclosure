@@ -187,3 +187,6 @@
 (defn score
   [result]
   (area-size (apply board result) :search-8-way? true))
+
+;; TODO: area-sizeをパフォーマンス・チューニングする。Paintアルゴリズムの応用が効くはず。
+
