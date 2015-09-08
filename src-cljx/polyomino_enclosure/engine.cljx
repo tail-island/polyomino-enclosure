@@ -118,7 +118,8 @@
               "原点を含まないポリオミノがあります。"))
           (validate-form []
             (let [[omino-count & omino-counts] (map count polyominos)]
-              (if-not (and (every? #(= % omino-count) omino-counts)
+              (if-not (and (<= 1 (first omino-counts) 12)
+                           (every? #(= % omino-count) omino-counts)
                            (every? #(= (area-size (board %)) omino-count) polyominos))
                 "不正なポリオミノがあります。")))
           (validate-duplication []
