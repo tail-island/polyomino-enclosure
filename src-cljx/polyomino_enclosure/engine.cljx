@@ -100,16 +100,15 @@
                                        (->> (cartesian-product (take-while #(<= % (inc x)) (iterate inc (dec x)))
                                                                (take-while #(<= % (inc y)) (iterate inc (dec y))))
                                             (remove #(= % [x y]))))))
-          (area-points [points point-hashes]
+          (area-points [points visited-points]
             (if-let [point (peek points)]
-              (cons point (lazy-seq (apply area-points (reduce (fn [[points point-hashes :as result] next-point]
-                                                                 (let [next-point-hash (hash next-point)]
-                                                                   (if-not (contains? point-hashes next-point-hash)
-                                                                     [(conj points next-point) (conj point-hashes next-point-hash)]
-                                                                     result)))
-                                                               [(pop points) point-hashes]
+              (cons point (lazy-seq (apply area-points (reduce (fn [[points visited-points :as result] next-point]
+                                                                 (if-not (contains? visited-points next-point)
+                                                                   [(conj points next-point) (conj visited-points next-point)]
+                                                                   result))
+                                                               [(pop points) visited-points]
                                                                (next-area-points point)))))))]
-    (count (area-points (conj #+clj clojure.lang.PersistentQueue/EMPTY #+cljs (.-EMPTY cljs.core.PersistentQueue) [0 0]) #{(hash [0 0])}))))
+    (count (area-points (conj #+clj clojure.lang.PersistentQueue/EMPTY #+cljs (.-EMPTY cljs.core.PersistentQueue) [0 0]) #{[0 0]}))))
 
 (defn validate-game
   [polyominos programs]
