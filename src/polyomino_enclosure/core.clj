@@ -10,10 +10,15 @@
 
 (defn -main
   [question-file answer-file]
-  (let [polyominos (create-polyominos (string/split-lines (slurp question-file)))
-        programs   (create-programs   (string/split-lines (slurp answer-file)))]
-    (if-let [error (or (validate-game polyominos programs)
-                       (validate-result (result (execute-programs polyominos programs))))]
+  (let [question-string (slurp question-file)
+        answer-string   (slurp answer-file)]
+    (if-let [error (validate-question question-string)]
       (do (println-err error)
           (println "0"))
-      (println (score (result (execute-programs polyominos programs)))))))
+      (let [polyominos (create-polyominos (string/split-lines question-string))
+            programs   (create-programs   (string/split-lines answer-string))]
+        (if-let [error (or (validate-game polyominos programs)
+                           (validate-result (result (execute-programs polyominos programs))))]
+          (do (println-err error)
+              (println "0"))
+          (println (score (result (execute-programs polyominos programs)))))))))

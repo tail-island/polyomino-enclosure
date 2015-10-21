@@ -72,7 +72,7 @@
              (nbsp)
              [:button.btn.btn-default {:on-click (fn [event] (clear :answer))} "解答のみクリア"]
              (nbsp)
-             [:button.btn.btn-primary {:on-click (fn [event] (put! event-publisher {:type :prepare}) nil)} "実行"]]]))))
+             [:button.btn.btn-primary {:on-click (fn [event] (put! event-publisher {:type :check}) nil)} "実行"]]]))))
 
 (defn feedback-view
   [{:keys [message] :as cursor} owner]
@@ -223,14 +223,20 @@
 
 (defn view
   [{:keys [definition feedback game] :as cursor} owner]
-  (letfn [(prepare []
-            (let [polyominos (engine/create-polyominos (string/split-lines (get-in @model [:definition :question])))
-                  programs   (engine/create-programs   (string/split-lines (get-in @model [:definition :answer])))
-                  error      (engine/validate-game polyominos programs)]
-              (om/update! cursor [:game     :polyominos] polyominos)
-              (om/update! cursor [:game     :programs]   programs)
-              (om/update! cursor [:feedback :message]    (or error ""))
-              (put! event-publisher {:type :draw-deck, :polyominos polyominos})))
+  (letfn [(check []
+            (om/update! cursor [:feedback :message] (or (engine/validate-question (get-in @model [:definition :question])) ""))
+            (put! event-publisher {:type :prepare}))
+          (prepare []
+            (when (no-error?)
+              (if-let [error (engine/validate-question (get-in @model [:definition :question]))]
+                (om/update! cursor [:feedback :message] error)
+                (let [polyominos (engine/create-polyominos (string/split-lines (get-in @model [:definition :question])))
+                      programs   (engine/create-programs   (string/split-lines (get-in @model [:definition :answer])))
+                      error      (engine/validate-game polyominos programs)]
+                  (om/update! cursor [:game     :polyominos] polyominos)
+                  (om/update! cursor [:game     :programs]   programs)
+                  (om/update! cursor [:feedback :message]    (or error ""))
+                  (put! event-publisher {:type :draw-deck, :polyominos polyominos})))))
           (execute []
             (when (no-error?)
               (let [execute-program-result (engine/execute-programs (get-in @model [:game :polyominos]) (get-in @model [:game :programs]))
@@ -242,6 +248,11 @@
     (reify
       om/IWillMount
       (will-mount [_]
+        (let [events (sub event-publication :check (chan))]
+          (go-loop []
+            (when (<! events)
+              (check))
+            (recur)))
         (let [events (sub event-publication :prepare (chan))]
           (go-loop []
             (when (<! events)

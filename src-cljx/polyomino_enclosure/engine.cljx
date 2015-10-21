@@ -6,12 +6,34 @@
   (for [x xs, y ys]
     [x y]))
 
+(defn validate-question
+  [question-string]
+  (letfn [(validate-not-empty [question-line-string]
+            (if (empty? question-line-string)
+              "空行です。"))
+          (validate-char [question-line-string]
+            (if-not (re-find #"^(?:\d|-|,)*$" question-line-string)
+              "不正な文字が含まれています。"))
+          (validate-last-char-is-digit [question-line-string]
+            (if-not (re-find #"\d$" question-line-string)
+              "行の最後の文字が数字ではありません。"))
+          (validate-item-count-is-even [question-line-string]
+            (if-not (= (mod (count (string/split question-line-string #",")) 2) 0)
+              "数値の個数が奇数です。"))
+          (validate-items-format [question-line-string]
+            (if-not (every? #(re-find #"^(?:-)?(?:[1-9]\d*|0)$" %) (string/split question-line-string #","))
+              "不正なフォーマットの数値が含まれています。"))]
+    (->> (string/split-lines question-string)
+         (keep-indexed #(if-let [error ((some-fn validate-not-empty validate-char validate-last-char-is-digit validate-item-count-is-even validate-items-format) %2)]
+                          (str "問題の" (inc %1) "行目、" error)))
+         (string/join)
+         (not-empty))))
+
 (defn create-polyominos
   [definition-strings]
   (letfn [(create-polyomino [definition-string]
             (if-not (empty? definition-string)
               (->> (string/split definition-string #",")
-                   (map string/trim)
                    (map #(#+clj Integer/parseInt #+cljs js/parseInt %))
                    (partition 2))))]
     (->> definition-strings
